@@ -1,3 +1,40 @@
+<<<<<<< HEAD
+=======
+GOFILES = $(shell find . -name '*.go' -not -path './vendor/*')
+define GOPACKAGES 
+golang.org/x/text \
+github.com/briandowns/spinner \
+github.com/datatogether/api/apiutil \
+github.com/dustin/go-humanize \
+github.com/fatih/color \
+github.com/olekukonko/tablewriter \
+github.com/qri-io/bleve \
+github.com/qri-io/dataset \
+github.com/qri-io/doggos \
+github.com/qri-io/deepdiff \
+github.com/qri-io/dsdiff \
+github.com/qri-io/varName \
+github.com/qri-io/iso8601 \
+github.com/sergi/go-diff/diffmatchpatch \
+github.com/sirupsen/logrus \
+github.com/spf13/cobra \
+github.com/spf13/cobra/doc \
+github.com/theckman/go-flock \
+github.com/ugorji/go/codec \
+github.com/beme/abide \
+github.com/ghodss/yaml \
+github.com/qri-io/ioes \
+github.com/pkg/errors \
+github.com/google/flatbuffers/go
+endef
+
+define GX_DEP_PACKAGES 
+github.com/qri-io/registry/regclient \
+github.com/qri-io/dag \
+github.com/qri-io/qfs \
+github.com/qri-io/startf
+endef
+>>>>>>> refactor(humanize): use go-humanize for CLI byte sizes
 
 default: build
 
