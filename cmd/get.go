@@ -92,6 +92,11 @@ func (o *GetOptions) Complete(f Factory, args []string) (err error) {
 			args = args[1:]
 		}
 	}
+	if len(args) == 0 {
+		if sel := PwdSelection(); sel != "" {
+			args = []string{sel}
+		}
+	}
 	o.Refs = args
 	if o.DatasetRequests, err = f.DatasetRequests(); err != nil {
 		return

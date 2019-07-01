@@ -2,12 +2,24 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 
 	"github.com/qri-io/ioes"
 	"github.com/qri-io/qri/lib"
 	"github.com/qri-io/qri/repo"
 	"github.com/spf13/cobra"
 )
+
+// PwdSelection checks the current working directory for a `.qri_ref` file
+// if one is present it reads and returns the value as a selection
+func PwdSelection() string {
+	data, err := ioutil.ReadFile(".qri_ref")
+	if err != nil {
+		return ""
+	}
+
+	return string(data)
+}
 
 // NewUseCommand creates a new `qri search` command that searches for datasets
 func NewUseCommand(f Factory, ioStreams ioes.IOStreams) *cobra.Command {
