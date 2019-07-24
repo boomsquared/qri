@@ -23,7 +23,6 @@ type Dataset dataset.Dataset
 
 // ValueForKey returns the given
 func (ds *Dataset) ValueForKey(key string) (val interface{}, err error) {
-	fmt.Println("value for key")
 	switch key {
 	case "body":
 		d := &dataset.Dataset{}
@@ -104,5 +103,21 @@ func (it *DsioIterator) Next() (*vals.Entry, bool) {
 func (it *DsioIterator) Done() {
 	if err := it.rdr.Close(); err != nil {
 		panic(err)
+	}
+}
+
+// ValueForIndex returns the value at a given index
+func (it *DsioIterator) ValueForIndex(i int) (v interface{}, err error) {
+	defer it.rdr.Close()
+
+	for {
+		ent, err := it.rdr.ReadEntry()
+		if err != nil {
+			return nil, err
+		}
+		if it.i == i {
+			return ent.Value, nil
+		}
+		it.i++
 	}
 }

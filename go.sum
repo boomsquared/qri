@@ -610,6 +610,7 @@ github.com/qri-io/apiutil v0.1.0 h1:0XJRfoSNL3rjZiRyfkf8m0CpEZbMxebUb/3dxjAD1hw=
 github.com/qri-io/apiutil v0.1.0/go.mod h1:LbfDISrItJfXIxqMwPjZwrxeYwF0mzjQxToYydVd5aI=
 github.com/qri-io/bleve v0.5.1-0.20190530204435-e47ddda1936d h1:lgcl2BdSQKyUnKcu0DU/dvRKJKiHFtGjQzbfVMK83yQ=
 github.com/qri-io/bleve v0.5.1-0.20190530204435-e47ddda1936d/go.mod h1:r0Dx7G6IPPlX7PxPM02Pg2CsZnuiMLyL/bexlzvZRtE=
+github.com/qri-io/compare v0.1.0 h1:A/MRx3uEnJ/iMjfJY1VOqH9CYs9zFSEYaFVeXuGfmis=
 github.com/qri-io/compare v0.1.0/go.mod h1:i/tVuDGRXVxhuZ8ZUieF23u6rQ6wLGJl7KKWpoMRaTE=
 github.com/qri-io/dag v0.1.0 h1:RFCZt7QFg1QYbaFmoZfTCgqdEfNoT1mH92ZEGnDgevU=
 github.com/qri-io/dag v0.1.0/go.mod h1:kd8vIdnTFlqfUdRrY3NghUuyqJCOFePHIuX4GdHf93U=
