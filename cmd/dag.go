@@ -102,12 +102,6 @@ type DAGOptions struct {
 
 // Complete adds any missing configuration that can only be added just before calling Run
 func (o *DAGOptions) Complete(f Factory, args []string) (err error) {
-	if len(args) > 0 {
-		if isDatasetField.MatchString(args[0]) {
-			o.Label = fullFieldToAbbr(args[0])
-			args = args[1:]
-		}
-	}
 	o.Refs = args
 	o.DatasetRequests, err = f.DatasetRequests()
 	return

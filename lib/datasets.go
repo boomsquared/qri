@@ -1,16 +1,14 @@
 package lib
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/rpc"
 
-	"github.com/ghodss/yaml"
 	"github.com/qri-io/dag"
 	"github.com/qri-io/dataset"
 	"github.com/qri-io/dataset/dsfs"
+	"github.com/qri-io/filter"
 	"github.com/qri-io/jsonschema"
 	"github.com/qri-io/qfs"
 	"github.com/qri-io/qri/actions"
@@ -18,6 +16,7 @@ import (
 	"github.com/qri-io/qri/p2p"
 	"github.com/qri-io/qri/repo"
 	"github.com/qri-io/qri/rev"
+	"github.com/qri-io/qri/base/source"
 )
 
 // DatasetRequests encapsulates business logic for working with Datasets on Qri
@@ -75,10 +74,7 @@ type GetParams struct {
 	// Path to get, this will often be a dataset reference like me/dataset
 	Path string
 
-	Format       string
-	FormatConfig dataset.FormatConfig
-
-	Selector string
+	Filter string
 
 	Limit, Offset int
 	All           bool
@@ -86,14 +82,14 @@ type GetParams struct {
 
 // GetResult combines data with it's hashed path
 type GetResult struct {
-	Dataset *dataset.Dataset `json:"data"`
-	Bytes   []byte           `json:"bytes"`
+	Source *dataset.Dataset `json:"source"`
+	Result interface{}      `json:"result"`
 }
 
 // Get retrieves datasets and components for a given reference. If p.Ref is provided, it is
 // used to load the dataset, otherwise p.Path is parsed to create a reference. The
 // dataset will be loaded from the local repo if available, or by asking peers for it.
-// Using p.Selector will control what components are returned in res.Bytes. The default,
+// Using p.Filter will control what components are returned in res.Bytes. The default,
 // a blank selector, will also fill the entire dataset at res.Data. If the selector is "body"
 // then res.Bytes is loaded with the body.
 func (r *DatasetRequests) Get(p *GetParams, res *GetResult) (err error) {
@@ -119,76 +115,87 @@ func (r *DatasetRequests) Get(p *GetParams, res *GetResult) (err error) {
 	}
 	ds.Name = ref.Name
 	ds.Peername = ref.Peername
-	res.Dataset = ds
+	res.Source = ds
+	res.Result = ds
 
 	if err = base.OpenDataset(r.node.Repo.Filesystem(), ds); err != nil {
 		return
 	}
 
-	if p.Selector == "body" {
-		// `qri get body` loads the body
-		if !p.All && (p.Limit < 0 || p.Offset < 0) {
-			return fmt.Errorf("invalid limit / offset settings")
-		}
-		df, err := dataset.ParseDataFormatString(p.Format)
+	if p.Filter != "" {
+		sds := &source.Dataset{}
+		*sds = source.Dataset(*ds)
+		res.Result, err = filter.Apply(p.Filter, sds)
 		if err != nil {
 			return err
 		}
-
-		bufData, err := actions.GetBody(r.node, ds, df, p.FormatConfig, p.Limit, p.Offset, p.All)
-		if err != nil {
-			return err
-		}
-
-		res.Bytes = bufData
-		return err
-	} else if p.Selector == "transform.script" && ds.Transform != nil && ds.Transform.ScriptFile() != nil {
-		// `qri get transform.script` loads the transform script, as a special case
-		// TODO (b5): this is a hack that should be generalized
-		res.Bytes, err = ioutil.ReadAll(ds.Transform.ScriptFile())
-		return err
-	} else if p.Selector == "viz.script" && ds.Viz != nil && ds.Viz.ScriptFile() != nil {
-		// `qri get viz.script` loads the visualization script, as a special case
-		res.Bytes, err = ioutil.ReadAll(ds.Viz.ScriptFile())
-		return err
-	} else if p.Selector == "rendered" && ds.Viz != nil && ds.Viz.RenderedFile() != nil {
-		// `qri get rendered` loads the rendered visualization script, as a special case
-		res.Bytes, err = ioutil.ReadAll(ds.Viz.RenderedFile())
-		return err
-	} else {
-		var value interface{}
-		if p.Selector == "" {
-			// `qri get` without a selector loads only the dataset head
-			value = res.Dataset
-		} else {
-			// `qri get <selector>` loads only the applicable component / field
-			value, err = base.ApplyPath(res.Dataset, p.Selector)
-			if err != nil {
-				return err
-			}
-		}
-		switch p.Format {
-		case "json":
-			// Pretty defaults to true for the dataset head, unless explicitly set in the config.
-			pretty := true
-			if p.FormatConfig != nil {
-				pvalue, ok := p.FormatConfig.Map()["pretty"].(bool)
-				if ok {
-					pretty = pvalue
-				}
-			}
-			if pretty {
-				res.Bytes, err = json.MarshalIndent(value, "", " ")
-			} else {
-				res.Bytes, err = json.Marshal(value)
-			}
-		case "yaml", "":
-			res.Bytes, err = yaml.Marshal(value)
-		default:
-			return fmt.Errorf("unknown format: \"%s\"", p.Format)
-		}
-		return err
 	}
+
+	// if p.Selector == "body" {
+	// 	// `qri get body` loads the body
+	// 	if !p.All && (p.Limit < 0 || p.Offset < 0) {
+	// 		return fmt.Errorf("invalid limit / offset settings")
+	// 	}
+	// 	df, err := dataset.ParseDataFormatString(p.Format)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+
+	// 	bufData, err := actions.GetBody(r.node, ds, df, p.FormatConfig, p.Limit, p.Offset, p.All)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+
+	// 	res.Bytes = bufData
+	// 	return err
+	// } else if p.Selector == "transform.script" && ds.Transform != nil && ds.Transform.ScriptFile() != nil {
+	// 	// `qri get transform.script` loads the transform script, as a special case
+	// 	// TODO (b5): this is a hack that should be generalized
+	// 	res.Bytes, err = ioutil.ReadAll(ds.Transform.ScriptFile())
+	// 	return err
+	// } else if p.Selector == "viz.script" && ds.Viz != nil && ds.Viz.ScriptFile() != nil {
+	// 	// `qri get viz.script` loads the visualization script, as a special case
+	// 	res.Bytes, err = ioutil.ReadAll(ds.Viz.ScriptFile())
+	// 	return err
+	// } else if p.Selector == "rendered" && ds.Viz != nil && ds.Viz.RenderedFile() != nil {
+	// 	// `qri get rendered` loads the rendered visualization script, as a special case
+	// 	res.Bytes, err = ioutil.ReadAll(ds.Viz.RenderedFile())
+	// 	return err
+	// } else {
+	// 	var value interface{}
+	// 	if p.Selector == "" {
+	// 		// `qri get` without a selector loads only the dataset head
+	// 		value = res.Dataset
+	// 	} else {
+	// 		// `qri get <selector>` loads only the applicable component / field
+	// 		value, err = base.ApplyPath(res.Dataset, p.Selector)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 	}
+	// 	switch p.Format {
+	// 	case "json":
+	// 		// Pretty defaults to true for the dataset head, unless explicitly set in the config.
+	// 		pretty := true
+	// 		if p.FormatConfig != nil {
+	// 			pvalue, ok := p.FormatConfig.Map()["pretty"].(bool)
+	// 			if ok {
+	// 				pretty = pvalue
+	// 			}
+	// 		}
+	// 		if pretty {
+	// 			res.Bytes, err = json.MarshalIndent(value, "", " ")
+	// 		} else {
+	// 			res.Bytes, err = json.Marshal(value)
+	// 		}
+	// 	case "yaml", "":
+	// 		res.Bytes, err = yaml.Marshal(value)
+	// 	default:
+	// 		return fmt.Errorf("unknown format: \"%s\"", p.Format)
+	// 	}
+	// 	return err
+	// }
+	return err
 }
 
 // SaveParams encapsulates arguments to Save

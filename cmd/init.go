@@ -121,8 +121,7 @@ func (o *InitOptions) Run() (err error) {
 	// Validate dataset name. The `init` command must only be used for creating new datasets.
 	// Make sure a dataset with this name does not exist in your repo.
 	p := lib.GetParams{
-		Path:     ref,
-		Selector: "",
+		Path: ref,
 	}
 	res := lib.GetResult{}
 	if err = o.DatasetRequests.Get(&p, &res); err == nil {

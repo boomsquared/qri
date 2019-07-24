@@ -3,7 +3,6 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"regexp"
 
 	util "github.com/qri-io/apiutil"
 	"github.com/qri-io/dataset"
@@ -59,6 +58,7 @@ dataset and its fields.`,
 	cmd.Flags().IntVar(&o.PageSize, "page-size", -1, "for body, limit how many entries to get per page")
 	cmd.Flags().IntVar(&o.Page, "page", -1, "for body, page at which to get entries")
 	cmd.Flags().BoolVarP(&o.All, "all", "a", true, "for body, whether to get all entries")
+	cmd.Flags().StringVarP(&o.Filter, "filter", "", "", "filter to apply to all output")
 
 	return cmd
 }
@@ -67,9 +67,9 @@ dataset and its fields.`,
 type GetOptions struct {
 	ioes.IOStreams
 
-	Refs     *RefSelect
-	Selector string
-	Format   string
+	Refs   *RefSelect
+	Filter string
+	Format string
 
 	Page     int
 	PageSize int
@@ -82,7 +82,7 @@ type GetOptions struct {
 }
 
 // isDatasetField checks if a string is a dataset field or not
-var isDatasetField = regexp.MustCompile("(?i)^(commit|cm|structure|st|body|bd|meta|md|viz|vz|transform|tf|rendered|rd)($|\\.)")
+// var isDatasetField = regexp.MustCompile("(?i)^(commit|cm|structure|st|body|bd|meta|md|viz|vz|transform|tf|rendered|rd)($|\\.)")
 
 // Complete adds any missing configuration that can only be added just before calling Run
 func (o *GetOptions) Complete(f Factory, args []string) (err error) {
@@ -90,17 +90,11 @@ func (o *GetOptions) Complete(f Factory, args []string) (err error) {
 		return
 	}
 
-	if len(args) > 0 {
-		if isDatasetField.MatchString(args[0]) {
-			o.Selector = args[0]
-			args = args[1:]
-		}
-	}
 	if o.Refs, err = GetCurrentRefSelect(f, args, -1); err != nil {
 		return
 	}
 
-	if o.Selector == "body" {
+	if o.Filter == ".body" {
 		// if we have a PageSize, but not Page, assume an Page of 1
 		if o.PageSize != -1 && o.Page == -1 {
 			o.Page = 1
@@ -126,7 +120,7 @@ func (o *GetOptions) Complete(f Factory, args []string) (err error) {
 
 // Run executes the get command
 func (o *GetOptions) Run() (err error) {
-	printRefSelect(o.Out, o.Refs)
+	printRefSelect(o.ErrOut, o.Refs)
 
 	// Pretty maps to a key in the FormatConfig map.
 	var fc dataset.FormatConfig
@@ -140,20 +134,23 @@ func (o *GetOptions) Run() (err error) {
 	page := util.NewPage(o.Page, o.PageSize)
 	// TODO(dlong): Restore ability to `get` from multiple datasets at once.
 	p := lib.GetParams{
-		Path:         o.Refs.Ref(),
-		Selector:     o.Selector,
-		Format:       o.Format,
-		FormatConfig: fc,
-		Offset:       page.Offset(),
-		Limit:        page.Limit(),
-		All:          o.All,
+		Path:   o.Refs.Ref(),
+		Filter: o.Filter,
+		Offset: page.Offset(),
+		Limit:  page.Limit(),
+		All:    o.All,
 	}
 	res := lib.GetResult{}
 	if err = o.DatasetRequests.Get(&p, &res); err != nil {
 		return err
 	}
 
-	buf := bytes.NewBuffer(res.Bytes)
+	data, err := lib.Encode(o.Format, fc, res.Result)
+	if err != nil {
+		return err
+	}
+
+	buf := bytes.NewBuffer(data)
 	buf.Write([]byte{'\n'})
 	printToPager(o.Out, buf)
 	return

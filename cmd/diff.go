@@ -57,6 +57,7 @@ Each change has a path that locates it within the document`,
 	}
 
 	cmd.Flags().StringVarP(&o.Format, "format", "f", "pretty", "output format. one of [json,pretty]")
+	cmd.Flags().StringVarP(&o.Filter, "filter", "", "", "filter to apply to resulting output")
 	cmd.Flags().BoolVar(&o.Summary, "summary", false, "just output the summary")
 
 	return cmd
@@ -66,23 +67,23 @@ Each change has a path that locates it within the document`,
 type DiffOptions struct {
 	ioes.IOStreams
 
-	Left     string
-	Right    string
-	Selector string
-	Format   string
-	Summary  bool
+	Left    string
+	Right   string
+	Filter  string
+	Format  string
+	Summary bool
 
 	DatasetRequests *lib.DatasetRequests
 }
 
 // Complete adds any missing configuration that can only be added just before calling Run
 func (o *DiffOptions) Complete(f Factory, args []string) (err error) {
-	if len(args) > 0 {
-		if isDatasetField.MatchString(args[0]) {
-			o.Selector = args[0]
-			args = args[1:]
-		}
-	}
+	// if len(args) > 0 {
+	// 	if isDatasetField.MatchString(args[0]) {
+	// 		o.Selector = args[0]
+	// 		args = args[1:]
+	// 	}
+	// }
 
 	if len(args) > 1 {
 		o.Left = args[0]
@@ -101,7 +102,7 @@ func (o *DiffOptions) Run() (err error) {
 	p := &lib.DiffParams{
 		LeftPath:  o.Left,
 		RightPath: o.Right,
-		Selector:  o.Selector,
+		Selector:  o.Filter,
 	}
 
 	// TODO(dlong): Reenable `use` functionality for this command.

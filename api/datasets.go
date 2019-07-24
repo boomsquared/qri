@@ -301,7 +301,8 @@ func (h *DatasetHandlers) listPublishedHandler(w http.ResponseWriter, r *http.Re
 // otherwise, resolve the peername and proceed as normal
 func (h *DatasetHandlers) getHandler(w http.ResponseWriter, r *http.Request) {
 	p := lib.GetParams{
-		Path: HTTPPathToQriPath(r.URL.Path),
+		Path:   HTTPPathToQriPath(r.URL.Path),
+		Filter: r.FormValue("filter"),
 	}
 	res := lib.GetResult{}
 	err := h.Get(&p, &res)
@@ -309,14 +310,16 @@ func (h *DatasetHandlers) getHandler(w http.ResponseWriter, r *http.Request) {
 		util.WriteErrResponse(w, http.StatusInternalServerError, err)
 		return
 	}
-	ref := repo.DatasetRef{
-		Peername:  res.Dataset.Peername,
-		ProfileID: profile.ID(res.Dataset.ProfileID),
-		Name:      res.Dataset.Name,
-		Path:      res.Dataset.Path,
-		Dataset:   res.Dataset,
-	}
-	util.WriteResponse(w, ref)
+
+	// TODO (b5) - result will need to populate with resolved dataset data
+	// ref := repo.DatasetRef{
+	// 	Peername:  res.Dataset.Peername,
+	// 	ProfileID: profile.ID(res.Dataset.ProfileID),
+	// 	Name:      res.Dataset.Name,
+	// 	Path:      res.Dataset.Path,
+	// 	Dataset:   res.Dataset,
+	// }
+	util.WriteResponse(w, res.Result)
 }
 
 func (h *DatasetHandlers) diffHandler(w http.ResponseWriter, r *http.Request) {
@@ -558,10 +561,10 @@ type DataResponse struct {
 func getParamsFromRequest(r *http.Request, readOnly bool, path string) (*lib.GetParams, error) {
 	listParams := lib.ListParamsFromRequest(r)
 	download := r.FormValue("download") == "true"
-	format := "json"
-	if download {
-		format = r.FormValue("format")
-	}
+	// format := "json"
+	// if download {
+	// 	format = r.FormValue("format")
+	// }
 	// if download is not set, and format is set, make sure the user knows that
 	// setting format won't do anything
 	if !download && r.FormValue("format") != "" && r.FormValue("format") != "json" {
@@ -569,12 +572,12 @@ func getParamsFromRequest(r *http.Request, readOnly bool, path string) (*lib.Get
 	}
 
 	p := &lib.GetParams{
-		Path:     path,
-		Format:   format,
-		Selector: "body",
-		Limit:    listParams.Limit,
-		Offset:   listParams.Offset,
-		All:      r.FormValue("all") == "true" && !readOnly,
+		Path: path,
+		// Format:   format,
+		Filter: ".body",
+		Limit:  listParams.Limit,
+		Offset: listParams.Offset,
+		All:    r.FormValue("all") == "true" && !readOnly,
 	}
 
 	if !readOnly {
@@ -625,27 +628,29 @@ func (h DatasetHandlers) bodyHandler(w http.ResponseWriter, r *http.Request) {
 		util.WriteErrResponse(w, http.StatusInternalServerError, err)
 		return
 	}
-	download := r.FormValue("download") == "true"
-	if download {
-		filename, err := lib.GenerateFilename(result.Dataset, p.Format)
-		if err != nil {
-			util.WriteErrResponse(w, http.StatusInternalServerError, err)
-			return
-		}
-		w.Header().Set("Content-Type", extensionToMimeType("."+p.Format))
-		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
-		w.Write(result.Bytes)
-		return
-	}
 
-	page := util.PageFromRequest(r)
-	dataResponse := DataResponse{
-		Path: result.Dataset.BodyPath,
-		Data: json.RawMessage(result.Bytes),
-	}
-	if err := util.WritePageResponse(w, dataResponse, r, page); err != nil {
-		log.Infof("error writing response: %s", err.Error())
-	}
+	// TODO (b5) - restore
+	// download := r.FormValue("download") == "true"
+	// if download {
+	// 	filename, err := lib.GenerateFilename(result.Dataset, p.Format)
+	// 	if err != nil {
+	// 		util.WriteErrResponse(w, http.StatusInternalServerError, err)
+	// 		return
+	// 	}
+	// 	w.Header().Set("Content-Type", extensionToMimeType("."+p.Format))
+	// 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+	// 	w.Write(result.Bytes)
+	// 	return
+	// }
+
+	// page := util.PageFromRequest(r)
+	// dataResponse := DataResponse{
+	// 	Path: result.Dataset.BodyPath,
+	// 	Data: json.RawMessage(result.Bytes),
+	// }
+	// if err := util.WritePageResponse(w, dataResponse, r, page); err != nil {
+	// 	log.Infof("error writing response: %s", err.Error())
+	// }
 }
 
 func (h DatasetHandlers) publishHandler(w http.ResponseWriter, r *http.Request, publish bool) {

@@ -127,21 +127,22 @@ func completeDiffRefs(node *p2p.QriNode, left, right *string) (err error) {
 
 // TODO (b5): this is a temporary hack, I'd like to eventually merge this with a
 // bunch of other code, generalizing the types of data qri can work on
-func (r *DatasetRequests) loadDiffData(path, selector string) (data interface{}, err error) {
+func (r *DatasetRequests) loadDiffData(path, filter string) (data interface{}, err error) {
 	if repo.IsRefString(path) {
 		getp := &GetParams{
 			Path:     path,
-			Format:   "json",
-			Selector: selector,
+			Filter: filter,
 			All:      true,
 		}
 		res := &GetResult{}
 		if err = r.Get(getp, res); err != nil {
 			return
 		}
-		err = json.Unmarshal(res.Bytes, &data)
+		data = res.Result
+		// err = json.Unmarshal(res.Bytes, &data)
 		return
 	}
+	
 	file, err := r.node.Repo.Filesystem().Get(path)
 	if err != nil {
 		return nil, err

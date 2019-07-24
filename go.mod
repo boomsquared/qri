@@ -2,13 +2,17 @@ module github.com/qri-io/qri
 
 go 1.12
 
+replace github.com/qri-io/dataset => /Users/b5/go/src/github.com/qri-io/dataset
+
+replace github.com/qri-io/filter => /Users/b5/dev/qri/filter
+
 require (
 	github.com/beme/abide v0.0.0-20181227202223-4c487ef9d895
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.7.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/flatbuffers v1.11.0
-	github.com/google/go-cmp v0.2.0
+	github.com/google/go-cmp v0.3.0
 	github.com/ipfs/go-cid v0.0.2
 	github.com/ipfs/go-ipfs v0.4.21
 	github.com/ipfs/go-ipld-format v0.0.2
@@ -35,6 +39,7 @@ require (
 	github.com/qri-io/dataset v0.1.3-0.20190719194105-19b550e95f71
 	github.com/qri-io/deepdiff v0.1.0
 	github.com/qri-io/doggos v0.1.0
+	github.com/qri-io/filter v0.0.0-20190722174243-4024ef58c6c3
 	github.com/qri-io/ioes v0.1.0
 	github.com/qri-io/iso8601 v0.1.0
 	github.com/qri-io/jsonschema v0.1.1
