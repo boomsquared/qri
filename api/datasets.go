@@ -301,7 +301,7 @@ func (h *DatasetHandlers) listPublishedHandler(w http.ResponseWriter, r *http.Re
 // otherwise, resolve the peername and proceed as normal
 func (h *DatasetHandlers) getHandler(w http.ResponseWriter, r *http.Request) {
 	p := lib.GetParams{
-		Path:   HTTPPathToQriPath(r.URL.Path),
+		Paths:   []string{HTTPPathToQriPath(r.URL.Path)},
 		Filter: r.FormValue("filter"),
 	}
 	res := lib.GetResult{}
@@ -572,7 +572,7 @@ func getParamsFromRequest(r *http.Request, readOnly bool, path string) (*lib.Get
 	}
 
 	p := &lib.GetParams{
-		Path: path,
+		Paths: []string{path},
 		// Format:   format,
 		Filter: ".body",
 		Limit:  listParams.Limit,

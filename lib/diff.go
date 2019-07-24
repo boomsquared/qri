@@ -130,7 +130,7 @@ func completeDiffRefs(node *p2p.QriNode, left, right *string) (err error) {
 func (r *DatasetRequests) loadDiffData(path, filter string) (data interface{}, err error) {
 	if repo.IsRefString(path) {
 		getp := &GetParams{
-			Path:     path,
+			Paths:     []string{path},
 			Filter: filter,
 			All:      true,
 		}

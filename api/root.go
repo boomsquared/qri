@@ -49,7 +49,7 @@ func (mh *RootHandler) Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p := lib.GetParams{
-		Path:   ref.String(),
+		Paths:   []string{ref.String()},
 		Filter: r.FormValue("filter"),
 	}
 	res := lib.GetResult{}
@@ -59,7 +59,7 @@ func (mh *RootHandler) Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if res.Source == nil || res.Source.IsEmpty() {
+	if len(res.Sources) == 0 || res.Sources[0].IsEmpty() {
 		util.WriteErrResponse(w, http.StatusNotFound, errors.New("cannot find peer dataset"))
 		return
 	}

@@ -13,10 +13,10 @@ import (
 	"github.com/qri-io/qfs"
 	"github.com/qri-io/qri/actions"
 	"github.com/qri-io/qri/base"
+	"github.com/qri-io/qri/base/source"
 	"github.com/qri-io/qri/p2p"
 	"github.com/qri-io/qri/repo"
 	"github.com/qri-io/qri/rev"
-	"github.com/qri-io/qri/base/source"
 )
 
 // DatasetRequests encapsulates business logic for working with Datasets on Qri
@@ -71,8 +71,8 @@ func (r *DatasetRequests) List(p *ListParams, res *[]repo.DatasetRef) error {
 
 // GetParams defines parameters for looking up the body of a dataset
 type GetParams struct {
-	// Path to get, this will often be a dataset reference like me/dataset
-	Path string
+	// Paths to get, this will often be a dataset reference like me/dataset
+	Paths []string
 
 	Filter string
 
@@ -82,8 +82,8 @@ type GetParams struct {
 
 // GetResult combines data with it's hashed path
 type GetResult struct {
-	Source *dataset.Dataset `json:"source"`
-	Result interface{}      `json:"result"`
+	Sources []*dataset.Dataset `json:"sources"`
+	Result  interface{}        `json:"result"`
 }
 
 // Get retrieves datasets and components for a given reference. If p.Ref is provided, it is
@@ -96,36 +96,53 @@ func (r *DatasetRequests) Get(p *GetParams, res *GetResult) (err error) {
 	if r.cli != nil {
 		return r.cli.Call("DatasetRequests.Get", p, res)
 	}
-	ref := &repo.DatasetRef{}
 
-	if p.Path == "" {
-		return repo.ErrEmptyRef
-	}
-	*ref, err = repo.ParseDatasetRef(p.Path)
-	if err != nil {
-		return fmt.Errorf("'%s' is not a valid dataset reference", p.Path)
-	}
-	if err = repo.CanonicalizeDatasetRef(r.node.Repo, ref); err != nil {
-		return
+	results := []interface{}{}
+
+	for _, path := range p.Paths {
+		ref := &repo.DatasetRef{}
+		var ds *dataset.Dataset
+
+		if path == "" {
+			return repo.ErrEmptyRef
+		}
+		*ref, err = repo.ParseDatasetRef(path)
+		if err != nil {
+			return fmt.Errorf("'%s' is not a valid dataset reference", path)
+		}
+		if err = repo.CanonicalizeDatasetRef(r.node.Repo, ref); err != nil {
+			return
+		}
+
+		ds, err = dsfs.LoadDataset(r.node.Repo.Store(), ref.Path)
+		if err != nil {
+			return fmt.Errorf("error loading dataset")
+		}
+		ds.Name = ref.Name
+		ds.Peername = ref.Peername
+
+		if err = base.OpenDataset(r.node.Repo.Filesystem(), ds); err != nil {
+			return
+		}
+
+		res.Sources = append(res.Sources, ds)
+
+		sds := &source.Dataset{}
+		*sds = source.Dataset(*ds)
+		results = append(results, sds)
 	}
 
-	ds, err := dsfs.LoadDataset(r.node.Repo.Store(), ref.Path)
-	if err != nil {
-		return fmt.Errorf("error loading dataset")
-	}
-	ds.Name = ref.Name
-	ds.Peername = ref.Peername
-	res.Source = ds
-	res.Result = ds
-
-	if err = base.OpenDataset(r.node.Repo.Filesystem(), ds); err != nil {
-		return
+	switch len(res.Sources) {
+	case 0:
+		return nil
+	case 1:
+		res.Result = results[0]
+	default:
+		res.Result = results
 	}
 
 	if p.Filter != "" {
-		sds := &source.Dataset{}
-		*sds = source.Dataset(*ds)
-		res.Result, err = filter.Apply(p.Filter, sds)
+		res.Result, err = filter.Apply(p.Filter, res.Result)
 		if err != nil {
 			return err
 		}

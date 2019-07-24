@@ -68,6 +68,8 @@ type GetOptions struct {
 	ioes.IOStreams
 
 	Refs   *RefSelect
+	// TODO (b5) - temp hack
+	Paths []string
 	Filter string
 	Format string
 
@@ -88,6 +90,13 @@ type GetOptions struct {
 func (o *GetOptions) Complete(f Factory, args []string) (err error) {
 	if o.DatasetRequests, err = f.DatasetRequests(); err != nil {
 		return
+	}
+
+	// TODO (b5) - cheap filter checking
+	if len(args) > 0 && args[0][0] == '.' {
+		o.Filter = args[0]
+		args = args[1:]
+		o.Paths = args
 	}
 
 	if o.Refs, err = GetCurrentRefSelect(f, args, -1); err != nil {
@@ -134,11 +143,16 @@ func (o *GetOptions) Run() (err error) {
 	page := util.NewPage(o.Page, o.PageSize)
 	// TODO(dlong): Restore ability to `get` from multiple datasets at once.
 	p := lib.GetParams{
-		Path:   o.Refs.Ref(),
+		Paths:   o.Refs.RefList(),
 		Filter: o.Filter,
 		Offset: page.Offset(),
 		Limit:  page.Limit(),
 		All:    o.All,
+	}
+
+	// TODO (b5) - more cheap hacks
+	if len(o.Paths) > 0 {
+		p.Paths = o.Paths
 	}
 	res := lib.GetResult{}
 	if err = o.DatasetRequests.Get(&p, &res); err != nil {
