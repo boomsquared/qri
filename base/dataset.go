@@ -211,13 +211,9 @@ func CreateDataset(ctx context.Context, r repo.Repo, streams ioes.IOStreams, ds,
 	if err = r.PutRef(ref); err != nil {
 		return
 	}
-	if err = r.LogEvent(repo.ETDsCreated, ref); err != nil {
-		return
-	}
-	_, storeIsPinner := r.Store().(cafs.Pinner)
-	if pin && storeIsPinner {
-		r.LogEvent(repo.ETDsPinned, ref)
-	}
+	// if err = r.LogEvent(repo.ETDsCreated, ref); err != nil {
+	// 	return
+	// }
 
 	if err = ReadDataset(ctx, r, &ref); err != nil {
 		return

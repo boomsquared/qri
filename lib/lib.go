@@ -36,6 +36,7 @@ import (
 	"github.com/qri-io/qri/repo/profile"
 	"github.com/qri-io/qri/update"
 	"github.com/qri-io/qri/update/cron"
+	"github.com/qri-io/qri/logbook"
 )
 
 var (
@@ -569,6 +570,7 @@ type Instance struct {
 	remote       *remote.Remote
 	remoteClient *remote.Client
 	registry     *regclient.Client
+	logbook *logbook.Book
 
 	rpc *rpc.Client
 }

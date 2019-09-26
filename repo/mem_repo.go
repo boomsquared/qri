@@ -11,7 +11,6 @@ import (
 // MemRepo is an in-memory implementation of the Repo interface
 type MemRepo struct {
 	*MemRefstore
-	*MemEventLog
 
 	store      cafs.Filestore
 	filesystem qfs.Filesystem
@@ -28,7 +27,6 @@ func NewMemRepo(p *profile.Profile, store cafs.Filestore, fsys qfs.Filesystem, p
 		store:       store,
 		filesystem:  fsys,
 		MemRefstore: &MemRefstore{},
-		MemEventLog: &MemEventLog{},
 		refCache:    &MemRefstore{},
 		profile:     p,
 		profiles:    ps,

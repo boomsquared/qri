@@ -29,7 +29,6 @@ type Repo struct {
 	basepath
 
 	repo.Refstore
-	EventLog
 
 	profile *profile.Profile
 
@@ -62,7 +61,6 @@ func NewRepo(store cafs.Filestore, fsys qfs.Filesystem, pro *profile.Profile, ba
 		basepath: bp,
 
 		Refstore: Refstore{basepath: bp, store: store, file: FileRefs},
-		EventLog: NewEventLog(base, FileEventLogs, store),
 
 		profiles: NewProfileStore(bp),
 	}

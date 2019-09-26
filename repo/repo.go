@@ -61,8 +61,6 @@ type Repo interface {
 
 	// All Repos must keep a Refstore, defining a store of known datasets
 	Refstore
-	// EventLog keeps a log of Profile activity for this repo
-	EventLog
 
 	// A repository must maintain profile information about the owner of this dataset.
 	// The value returned by Profile() should represent the peer.
