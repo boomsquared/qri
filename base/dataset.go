@@ -312,8 +312,9 @@ func ReadDataset(ctx context.Context, r repo.Repo, ref *repo.DatasetRef) (err er
 // PinDataset marks a dataset for retention in a store
 func PinDataset(ctx context.Context, r repo.Repo, ref repo.DatasetRef) error {
 	if pinner, ok := r.Store().(cafs.Pinner); ok {
-		pinner.Pin(ctx, ref.Path, true)
-		return r.LogEvent(repo.ETDsPinned, ref)
+		return pinner.Pin(ctx, ref.Path, true)
+		// return r.LogEvent(repo.ETDsPinned, ref)
+
 	}
 	return repo.ErrNotPinner
 }
@@ -321,8 +322,8 @@ func PinDataset(ctx context.Context, r repo.Repo, ref repo.DatasetRef) error {
 // UnpinDataset unmarks a dataset for retention in a store
 func UnpinDataset(ctx context.Context, r repo.Repo, ref repo.DatasetRef) error {
 	if pinner, ok := r.Store().(cafs.Pinner); ok {
-		pinner.Unpin(ctx, ref.Path, true)
-		return r.LogEvent(repo.ETDsUnpinned, ref)
+		return pinner.Unpin(ctx, ref.Path, true)
+		// return r.LogEvent(repo.ETDsUnpinned, ref)
 	}
 	return repo.ErrNotPinner
 }

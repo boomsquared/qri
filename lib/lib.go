@@ -23,10 +23,10 @@ import (
 	ipfs_http "github.com/qri-io/qfs/cafs/ipfs_http"
 	"github.com/qri-io/qfs/httpfs"
 	"github.com/qri-io/qfs/localfs"
-	"github.com/qri-io/qfs/muxfs"
 	"github.com/qri-io/qri/config"
 	"github.com/qri-io/qri/config/migrate"
 	"github.com/qri-io/qri/fsi"
+	"github.com/qri-io/qri/logbook"
 	"github.com/qri-io/qri/p2p"
 	"github.com/qri-io/qri/registry/regclient"
 	regmock "github.com/qri-io/qri/registry/regserver/mock"
@@ -36,7 +36,6 @@ import (
 	"github.com/qri-io/qri/repo/profile"
 	"github.com/qri-io/qri/update"
 	"github.com/qri-io/qri/update/cron"
-	"github.com/qri-io/qri/logbook"
 )
 
 var (
@@ -478,7 +477,7 @@ func newRepo(path string, cfg *config.Config, store cafs.Filestore) (r repo.Repo
 }
 
 func newFilesystem(cfg *config.Config, store cafs.Filestore) (qfs.Filesystem, error) {
-	mux := map[string]qfs.PathResolver{
+	mux := map[string]qfs.Filesystem{
 		"local": localfs.NewFS(),
 		"http":  httpfs.NewFS(),
 		"cafs":  store,
@@ -488,7 +487,7 @@ func newFilesystem(cfg *config.Config, store cafs.Filestore) (qfs.Filesystem, er
 		mux["ipfs"] = ipfss
 	}
 
-	fsys := muxfs.NewMux(mux)
+	fsys := qfs.NewMux(mux)
 	return fsys, nil
 }
 
@@ -570,7 +569,7 @@ type Instance struct {
 	remote       *remote.Remote
 	remoteClient *remote.Client
 	registry     *regclient.Client
-	logbook *logbook.Book
+	logbook      *logbook.Book
 
 	rpc *rpc.Client
 }

@@ -5,7 +5,7 @@ import (
 
 	"github.com/qri-io/ioes"
 	"github.com/qri-io/qri/lib"
-	"github.com/qri-io/qri/rev"
+	"github.com/qri-io/qri/dsref"
 	"github.com/spf13/cobra"
 )
 
@@ -57,7 +57,7 @@ type RemoveOptions struct {
 	Args []string
 
 	RevisionsText  string
-	Revision       rev.Rev
+	Revision       dsref.Rev
 	All            bool
 	DeleteFSIFiles bool
 	Unlink         bool

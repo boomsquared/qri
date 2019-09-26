@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	golog "github.com/ipfs/go-log"
 	crypto "github.com/libp2p/go-libp2p-crypto"
@@ -12,6 +13,7 @@ import (
 	"github.com/qri-io/qfs"
 	"github.com/qri-io/qfs/cafs"
 	"github.com/qri-io/qri/base"
+	"github.com/qri-io/qri/logbook"
 	"github.com/qri-io/qri/registry/regclient"
 	"github.com/qri-io/qri/repo"
 	"github.com/qri-io/qri/repo/profile"
@@ -32,9 +34,10 @@ type Repo struct {
 
 	profile *profile.Profile
 
-	store cafs.Filestore
-	fsys  qfs.Filesystem
-	graph map[string]*dsgraph.Node
+	store   cafs.Filestore
+	fsys    qfs.Filesystem
+	graph   map[string]*dsgraph.Node
+	logbook *logbook.Book
 
 	profiles *ProfileStore
 	index    search.Index
@@ -53,12 +56,18 @@ func NewRepo(store cafs.Filestore, fsys qfs.Filesystem, pro *profile.Profile, ba
 		return nil, fmt.Errorf("Expected: PrivateKey")
 	}
 
+	book, err := logbook.NewBook(pro.PrivKey, pro.Peername, fsys, filepath.Join(base, "logbook.qfb"))
+	if err != nil {
+		return nil, err
+	}
+
 	r := &Repo{
 		profile: pro,
 
 		store:    store,
 		fsys:     fsys,
 		basepath: bp,
+		logbook:  book,
 
 		Refstore: Refstore{basepath: bp, store: store, file: FileRefs},
 
@@ -109,6 +118,10 @@ func (r *Repo) SetFilesystem(fs qfs.Filesystem) {
 // Profile gives this repo's peer profile
 func (r *Repo) Profile() (*profile.Profile, error) {
 	return r.profile, nil
+}
+
+func (r *Repo) Logbook() *logbook.Book {
+	return r.logbook
 }
 
 // SetProfile updates this repo's peer profile info

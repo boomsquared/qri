@@ -364,7 +364,7 @@ func TestCompareDatasetRefs(t *testing.T) {
 }
 
 func TestCanonicalizeDatasetRef(t *testing.T) {
-	lucille := &profile.Profile{ID: profile.ID("a"), Peername: "lucille"}
+	lucille := &profile.Profile{ID: profile.ID("a"), Peername: "lucille", PrivKey: privKey}
 	carla := &profile.Profile{ID: profile.ID("b"), Peername: "carla"}
 
 	store := cafs.NewMapstore()
@@ -429,7 +429,7 @@ func TestCanonicalizeDatasetRef(t *testing.T) {
 }
 
 func TestCanonicalizeProfile(t *testing.T) {
-	prof := &profile.Profile{Peername: "lucille", ID: profile.IDB58MustDecode("QmYCvbfNbCwFR45HiNP45rwJgvatpiW38D961L5qAhUM5Y")}
+	prof := &profile.Profile{Peername: "lucille", ID: profile.IDB58MustDecode("QmYCvbfNbCwFR45HiNP45rwJgvatpiW38D961L5qAhUM5Y"), PrivKey: privKey}
 	store := cafs.NewMapstore()
 	repo, err := NewMemRepo(prof, store, qfs.NewMemFS(), profile.NewMemStore())
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"github.com/qri-io/dataset/dsgraph"
 	"github.com/qri-io/qfs"
 	"github.com/qri-io/qfs/cafs"
+	"github.com/qri-io/qri/logbook"
 	"github.com/qri-io/qri/repo/profile"
 )
 
@@ -16,6 +17,7 @@ type MemRepo struct {
 	filesystem qfs.Filesystem
 	graph      map[string]*dsgraph.Node
 	refCache   *MemRefstore
+	logbook    *logbook.Book
 
 	profile  *profile.Profile
 	profiles profile.Store
@@ -23,11 +25,16 @@ type MemRepo struct {
 
 // NewMemRepo creates a new in-memory repository
 func NewMemRepo(p *profile.Profile, store cafs.Filestore, fsys qfs.Filesystem, ps profile.Store) (*MemRepo, error) {
+	book, err := logbook.NewBook(p.PrivKey, p.Peername, fsys, "/mem/logbook")
+	if err != nil {
+		return nil, err
+	}
 	return &MemRepo{
 		store:       store,
 		filesystem:  fsys,
 		MemRefstore: &MemRefstore{},
 		refCache:    &MemRefstore{},
+		logbook:     book,
 		profile:     p,
 		profiles:    ps,
 	}, nil
@@ -41,6 +48,11 @@ func (r *MemRepo) Store() cafs.Filestore {
 // Filesystem gives access to the underlying filesystem
 func (r *MemRepo) Filesystem() qfs.Filesystem {
 	return r.filesystem
+}
+
+// Logbook accesses the mem repo logbook
+func (r *MemRepo) Logbook() *logbook.Book {
+	return r.logbook
 }
 
 // SetFilesystem implements QFSSetter, currently used during lib contstruction

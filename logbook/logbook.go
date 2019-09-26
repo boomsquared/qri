@@ -39,14 +39,20 @@ type Book struct {
 	bk       *log.Book
 	pk       crypto.PrivKey
 	location string
-	fs       qfs.WritableFilesystem
+	fs       qfs.Filesystem
 }
 
 // NewBook initializes a logbook, reading any existing data at the given
 // location, on the given filesystem. logbooks are encrypted at rest. The
 // same key must be given to decrypt an existing logbook
-func NewBook(pk crypto.PrivKey, username string, fs qfs.WritableFilesystem, location string) (*Book, error) {
+func NewBook(pk crypto.PrivKey, username string, fs qfs.Filesystem, location string) (*Book, error) {
 	ctx := context.Background()
+	if pk == nil {
+		return nil, fmt.Errorf("logbook: private key is required")
+	}
+	if fs == nil {
+		return nil, fmt.Errorf("logbook: filsystem is required")
+	}
 	pid, err := calcProfileID(pk)
 	if err != nil {
 		return nil, err
