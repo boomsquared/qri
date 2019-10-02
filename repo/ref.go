@@ -9,6 +9,7 @@ import (
 	"github.com/mr-tron/base58/base58"
 	"github.com/multiformats/go-multihash"
 	"github.com/qri-io/dataset"
+	"github.com/qri-io/qri/dsref"
 	"github.com/qri-io/qri/repo/profile"
 	repofb "github.com/qri-io/qri/repo/repo_fbs"
 )
@@ -38,6 +39,17 @@ var isRefString = regexp.MustCompile(`^((\w+)\/(\w+)){0,1}(@(\w*)(\/\w{0,4}\/\w+
 // IsRefString checks to see if a reference is a valid dataset ref string
 func IsRefString(path string) bool {
 	return isRefString.MatchString(path)
+}
+
+// ConvertToDsref is a shim function to transition from a DatasetRef to a
+// dsref.Ref while we experiment with dsref as the home of name parsing
+func ConvertToDsref(ref DatasetRef) dsref.Ref {
+	return dsref.Ref{
+		Username:  ref.Peername,
+		Name:      ref.Name,
+		ProfileID: ref.ProfileID.String(),
+		Path:      ref.Path,
+	}
 }
 
 // DatasetRef encapsulates a reference to a dataset. This needs to exist to bind

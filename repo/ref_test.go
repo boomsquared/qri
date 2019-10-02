@@ -6,6 +6,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/qri-io/qfs"
 	"github.com/qri-io/qfs/cafs"
+	"github.com/qri-io/qri/dsref"
 	"github.com/qri-io/qri/repo/profile"
 	repofb "github.com/qri-io/qri/repo/repo_fbs"
 )
@@ -539,5 +540,25 @@ func TestDatasetRefFlatbuffer(t *testing.T) {
 
 	if diff := cmp.Diff(src, got); diff != "" {
 		t.Errorf("compare link mismatch(-want +got):\n%s", diff)
+	}
+}
+
+func TestConvertToDsref(t *testing.T) {
+	ref := DatasetRef{
+		ProfileID: profile.IDB58MustDecode("QmYCvbfNbCwFR45HiNP45rwJgvatpiW38D961L5qAhUM5Y"),
+		Peername:  "lucy",
+		Name:      "ball",
+		Path:      "/ipfs/QmRdexT18WuAKVX3vPusqmJTWLeNSeJgjmMbaF5QLGHna1",
+	}
+	expect := dsref.Ref{
+		Username:  "lucy",
+		Name:      "ball",
+		ProfileID: "QmYCvbfNbCwFR45HiNP45rwJgvatpiW38D961L5qAhUM5Y",
+		Path:      "/ipfs/QmRdexT18WuAKVX3vPusqmJTWLeNSeJgjmMbaF5QLGHna1",
+	}
+	got := ConvertToDsref(ref)
+
+	if diff := cmp.Diff(expect, got); diff != "" {
+		t.Errorf("result mismatch (-want +got):\n%s", diff)
 	}
 }
